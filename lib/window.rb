@@ -12,6 +12,9 @@ module Synthesizer
       end
 
       @font = Gosu::Font.new(28)
+      @keys = "zxcvbnm,./".chars
+      @base_freq = 110.0
+      @stride_freq = 2.0 ** (1.0 / 12.0)
     end
 
     def draw
@@ -24,9 +27,19 @@ module Synthesizer
     end
 
     def button_down(id)
+      if index = get_key(id)
+        @instrument.key_down(id, @driver.time, @base_freq + (@stride_freq * index))
+      end
     end
 
     def button_up(id)
+      if index = get_key(id)
+        @instrument.key_released(id, @driver.time)
+      end
+    end
+
+    def get_key(id)
+      @keys.index( Gosu.button_id_to_char(id) )
     end
   end
 end

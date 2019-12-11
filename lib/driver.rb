@@ -1,12 +1,13 @@
 # Using https://github.com/jstrait/nanosynth as reference/guide
 class Driver
+  attr_reader :time
   def initialize(sample_rate: 44100)
     @sample_rate = sample_rate
 
     @time = 0.0
     @time_step = 1.0 / @sample_rate
     @max_sample = 0xff
-    @pipe = IO.popen("aplay -r #{@sample_rate} -f U8", "w")
+    @pipe = IO.popen("aplay --rate #{@sample_rate} --format U8", "w")
   end
 
   def run(instrument)
@@ -27,14 +28,13 @@ class Driver
 
   def play(instrument)
     samples = []
-    # 44100 / 20 => 2205
     @sample_rate.times do |i|
-      samples << clip(instrument.sample(@time), 1.0)# * @max_sample
+      samples << ((clip(instrument.sample(@time), 1.0) * 127.0).round + 128)# * @max_sample
 
       @time += @time_step
     end
 
-    @pipe.write( samples.map { |sample| (sample * 127.0).round + 128 }.pack("C*") )
+    @pipe.write( samples.pack("C*") ) if samples.size > 0
   end
 
   def close
